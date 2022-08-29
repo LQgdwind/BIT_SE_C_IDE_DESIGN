@@ -5,15 +5,13 @@
 #include "helper.h"
 #include "editor.h"
 #include "explorer.h"
+#include "finddialog.h"
+#include "replacedialog.h"
 
 class EMenu : public QMenuBar
 {
     Q_OBJECT
 private:
-    bool is_open ;
-    bool is_new_file ;
-    QString file_name_current;
-    QString file_string_current;
 public:
     explicit EMenu(QWidget *parent = nullptr);
     QMenu *fileMenu;
@@ -34,23 +32,22 @@ public:
     QAction *cutAct;
 
     QAction *compileAct;
-
-    QAction *beautifyAct;
     QAction *findAct;
-
+    QAction *replaceAct;
+    QAction *beautifyAct;
     QAction *runAct;
     Editor *editor;
     Explorer *explorer;
 
     QClipboard * clipboard;
-
-    bool openTextByStream(const QString &aFileName);
-    bool saveTextByStream(const QString &aFileName);
+private:
+    bool isQualified();
+    FindDialog *finddialog;
+    ReplaceDialog *replacedialog;
 signals:
     void run_signal();
     void compile_signal();
 public slots:
-
     void on_open_click();
     void on_open_folder_click();
     void on_save_click();
@@ -62,6 +59,9 @@ public slots:
     void on_cut_click();
     void on_undo_click();
     void on_redo_click();
+    void on_find_click();
+    void on_replace_click();
+    void on_beautify_click();
 
     void on_compile_click();
     void on_run_click();

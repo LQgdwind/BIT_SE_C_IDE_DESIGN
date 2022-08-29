@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     menubar(new EMenu),
     sidebar(new ESideBar),
     explorer(new Explorer),
+    // build(new Build),
     editor(new Editor)
 {
     ui->setupUi(this);

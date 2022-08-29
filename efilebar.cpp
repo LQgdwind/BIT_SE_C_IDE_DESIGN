@@ -4,24 +4,68 @@
 EfileBar::EfileBar(QWidget *parent) : QWidget(parent),layout(new QHBoxLayout)
 {
     this->setLayout(layout);
-
-    layout->setSpacing(0);
+    layout->setSpacing(1);
     layout->setMargin(0);
-    //EFileLabel filelab{"file_path",nullptr,this};
+    layout->setDirection(QBoxLayout::RightToLeft);
+    layout->addWidget(new QLabel,1);
 }
 
 void EfileBar::open_file(QString file_path)
 {
-    for(auto& child:this->children()){
-       EFileLabel *file=qobject_cast<EFileLabel*>(child);
-       if(!file)continue;
-       if(file->filePath==file_path){
-           emit file->openFile->click();
-           return;
-       }
+    if(openedFiles.contains(file_path)){
+        emit openedFiles.value(file_path).label->on_open_file_click();
+        return;
     }
-    EFileLabel *filelab=new EFileLabel(file_path,edit,this);
+    QFile file{file_path};
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return;
+    QTextStream in(&file);
+    QString context{""};
+    while(!in.atEnd()){
+        context.append(in.readLine());
+    }
+    EFileLabel *filelab=new EFileLabel(file_path);
+    filelab->setParent(this);
+    EcodeEditor *edit=new EcodeEditor();
+    edit->setPlainText(context);
     layout->addWidget(filelab);
-    filelab->setStyleSheet("background-color: white");
-    emit filelab->openFile->click();
+    openedFiles.insert(file_path,EFileInfo(filelab,edit));
+    connect(edit,&EcodeEditor::textChanged,filelab,&EFileLabel::handleUncommitChange);
+    connect(filelab,&EFileLabel::closeClicked,this,&EfileBar::deleteLabel);
+    connect(filelab,&EFileLabel::openClicked,this,&EfileBar::showLabel);
+    filelab->on_open_file_click();
+}
+
+void EfileBar::showLabel(QString name)
+{
+    if(openedFiles.contains(curEditing))openedFiles.value(curEditing).label->setIsChosen(false);
+    curEditing=name;
+    openedFiles.value(curEditing).label->setIsChosen(true);
+    emit updateEdit(openedFiles.value(name).edit);
+}
+
+void EfileBar::deleteLabel(QString name)
+{
+    EFileLabel *aimLab=openedFiles.value(name).label;
+    EcodeEditor *aimEdit=openedFiles.value(name).edit;
+    if(aimLab->getChangeUnCommit()){
+        QMessageBox::StandardButton res=QMessageBox::question(parentWidget(),tr("unsaved file"),tr("Whether you want to save an unsaved file?"));
+        if(res==QMessageBox::Yes)aimEdit->saveToFile(name);
+    }
+    if(name==curEditing){
+        bool hasNext{false};
+        for(auto& child:children()){
+            EFileLabel *lab=qobject_cast<EFileLabel*>(child);
+            if((!lab)||(lab==aimLab))continue;
+            hasNext=true;
+            lab->on_open_file_click();
+            break;
+        }
+        if(!hasNext){
+            updateEdit(nullptr);
+        }
+    }
+    openedFiles.remove(name);
+    aimLab->deleteLater();
+    aimEdit->deleteLater();
 }

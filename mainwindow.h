@@ -8,11 +8,11 @@
 #include "editor.h"
 #include "helper.h"
 #include "build.h"
+#include "highlighter.h"
 
 namespace Ui {
 class MainWindow;
 }
-
 
 
 class MainWindow : public QMainWindow

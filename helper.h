@@ -9,7 +9,9 @@
 #include <QMenuBar>
 #include <QAction>
 #include <QLabel>
+#include <QMap>
 #include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QMessageBox>
 

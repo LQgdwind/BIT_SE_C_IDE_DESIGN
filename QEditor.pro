@@ -31,9 +31,15 @@ SOURCES += \
     editor.cpp \
     explorer.cpp \
     efilebar.cpp \
+    efileinfo.cpp \
     efilelabel.cpp \
     eoutput.cpp \
-    build.cpp
+    build.cpp \
+    ecodeedit.cpp \
+    completelistwidget.cpp \
+    highlighter.cpp \
+    finddialog.cpp \
+    replacedialog.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -42,13 +48,20 @@ HEADERS += \
     editor.h \
     explorer.h \
     efilebar.h \
+    efileinfo.h \
     helper.h \
     efilelabel.h \
     eoutput.h \
-    build.h
+    build.h \
+    ecodeedit.h \
+    completelistwidget.h \
+    highlighter.h \
+    finddialog.h \
+    replacedialog.h
 
 FORMS += \
         mainwindow.ui
 
 RESOURCES += \
+    res.qrc \
     res.qrc

@@ -14,8 +14,9 @@ public:
     QTreeWidget *fileTree;
     QVBoxLayout *layout;
     QLabel *header;
-    void addRootDir(QDir dir);
     Editor *editor;
+    void addRootDir(QDir dir);
+    QTreeWidgetItem *findSelectedDir();
 private:
     void addNode(QFileInfo &info,QTreeWidgetItem *root);
     void setupLayout();

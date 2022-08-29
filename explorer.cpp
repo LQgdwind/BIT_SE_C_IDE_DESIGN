@@ -21,6 +21,18 @@ void Explorer::addRootDir(QDir dir)
     root->setExpanded(true);
 }
 
+QTreeWidgetItem* Explorer::findSelectedDir()
+{
+    QTreeWidgetItem *ans=nullptr;
+    QList<QTreeWidgetItem *> candidates=fileTree->selectedItems();
+    if(candidates.size()>0){
+        QString name=candidates.value(0)->data(0,Qt::UserRole).toString();
+        QFileInfo file{name};
+        if(file.exists()&&file.isDir())ans=candidates.value(0);
+    }
+    return ans;
+}
+
 void Explorer::addNode(QFileInfo &info, QTreeWidgetItem *root)
 {
     QTreeWidgetItem *child=new QTreeWidgetItem();

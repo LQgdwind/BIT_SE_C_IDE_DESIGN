@@ -8,7 +8,7 @@ ESideBar::ESideBar(QWidget *parent) : QWidget(parent)
     this->exploreBtn = new QPushButton(this);
     exploreBtn->setMaximumSize(64,64);
     exploreBtn->setMinimumSize(64,64);
-    QIcon con1(":/images/explorer_icon.jpeg");
+    QIcon con1(":/images/explorer_icon.png");
     exploreBtn->setIcon(con1);
     exploreBtn->setIconSize(QSize(50,50));
     exploreBtn->setAutoFillBackground(true);
@@ -17,7 +17,7 @@ ESideBar::ESideBar(QWidget *parent) : QWidget(parent)
     this->searchBtn = new QPushButton(this);
     searchBtn->setMaximumSize(64,64);
     searchBtn->setMinimumSize(64,64);
-    QIcon con2(":/images/search_icon.jpeg");
+    QIcon con2(":/images/search_icon.png");
     searchBtn->setIcon(con2);
     searchBtn->setIconSize(QSize(50,50));
     searchBtn->setAutoFillBackground(true);
@@ -27,7 +27,7 @@ ESideBar::ESideBar(QWidget *parent) : QWidget(parent)
     this->runBtn = new QPushButton(this);
     runBtn->setMaximumSize(64,64);
     runBtn->setMinimumSize(64,64);
-    QIcon con3(":/images/run_icon.jpeg");
+    QIcon con3(":/images/run_icon.png");
     runBtn->setIcon(con3);
     runBtn->setIconSize(QSize(50,50));
     runBtn->setAutoFillBackground(true);
@@ -37,7 +37,7 @@ ESideBar::ESideBar(QWidget *parent) : QWidget(parent)
     this->compileBtn = new QPushButton(this);
     compileBtn->setMaximumSize(64,64);
     compileBtn->setMinimumSize(64,64);
-    QIcon con4(":/images/compile_icon.jpeg");
+    QIcon con4(":/images/compile_icon.png");
     compileBtn->setIcon(con4);
     compileBtn->setIconSize(QSize(50,50));
     compileBtn->setAutoFillBackground(true);

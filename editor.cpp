@@ -1,35 +1,71 @@
 #include "editor.h"
+#include <QPlainTextEdit>
 
 
-Editor::Editor(QWidget *parent) : QWidget(parent),layout(new QVBoxLayout),efilebar(new EfileBar),edit(new QTextEdit),eoutputlabel(new QLabel),eoutput(new EOutPut)
+Editor::Editor(QWidget *parent) : QWidget(parent),layout(new QVBoxLayout),efilebar(new EfileBar),OriginalEdit(new EcodeEditor),eoutputlabel(new QLabel),eoutput(new EOutPut)
 {
+    configureOriginalEdit();
+    edit=OriginalEdit;
+    connect(efilebar,&EfileBar::updateEdit,this,&Editor::handleUpdateEdit);
     setupLayout();
-    efilebar->edit=edit;
 }
 
 void Editor::setupLayout()
 {
-    layout->addWidget(efilebar);
-    layout->addWidget(edit);
-    layout->addWidget(eoutputlabel);
-    layout->addWidget(eoutput);
+    this->setLayout(layout);
     layout->setMargin(0);
     layout->setSpacing(0);
-    this->setLayout(layout);
+    layout->addWidget(efilebar);
     efilebar->setFixedHeight(25);
-    //efilebar->setStyleSheet("background-color: rgb(128,128,128)");
-    //this->setStyleSheet("background-color: rgb(150,150,150)");
-    //这两行的css不要了！22.8.27 9:26 am by zlq
+    updateEditLayout();
+    addTerminal();
+}
+
+void Editor::updateEditLayout()
+{
+    layout->addWidget(edit);
     QFont textFont;
     textFont.setFamily("Consolas");
     textFont.setPointSize(15);
     this->edit->setFont(textFont);
     this->edit->setStyleSheet("color: black");
+}
 
+void Editor::configureOriginalEdit()
+{
+    QString hint="\n\n\nOpen File Ctrl+O\n"
+                 "Open Folder Ctrl+Shift+O\n"
+                 "Create New File Ctrl+N\n";
+    OriginalEdit->setPlainText(hint);
+    OriginalEdit->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter));
+    OriginalEdit->setReadOnly(true);
+}
+
+void Editor::removeTerminal()
+{
+    layout->removeWidget(eoutputlabel);
+    layout->removeWidget(eoutput);
+}
+
+void Editor::addTerminal()
+{
+    layout->addWidget(eoutputlabel);
+    layout->addWidget(eoutput);
     eoutputlabel->setFixedHeight(25);
     eoutputlabel->setText(" Output");
+    QFont textFont;
+    textFont.setFamily("Consolas");
     textFont.setPointSize(12);
     eoutputlabel->setFont(textFont);
     eoutput->setFixedHeight(150);
+}
 
+void Editor::handleUpdateEdit(EcodeEditor *newEdit)
+{
+    edit->setParent(nullptr);
+    layout->removeWidget(edit);
+    removeTerminal();
+    edit=newEdit?newEdit:OriginalEdit;
+    updateEditLayout();
+    addTerminal();
 }

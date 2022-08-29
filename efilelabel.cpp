@@ -1,16 +1,29 @@
 #include "efilelabel.h"
 
-EFileLabel::EFileLabel(QString filePath, QTextEdit *edit,QWidget *parent) :
+EFileLabel::EFileLabel(QString filePath,QWidget *parent) :
     QWidget(parent),
     filePath(filePath),
-    edit(edit),
+    fileName(QFileInfo(filePath).fileName()),
     openFile(new QPushButton),
     exitFile(new QPushButton),
     layout(new QHBoxLayout)
 {
     setupLayout();
-    connect(openFile,SIGNAL(clicked()),this,SLOT(on_open_file_click()));
-    connect(exitFile,SIGNAL(clicked()),this,SLOT(on_close_file_click()));
+    connect(openFile,&QPushButton::clicked,this,&EFileLabel::on_open_file_click);
+    connect(exitFile,&QPushButton::clicked,this,&EFileLabel::on_close_file_click);
+}
+
+void EFileLabel::updateLabelName()
+{
+    QString newName=fileName;
+    if(changeUnCommit)newName+="*";
+    openFile->setText(newName);
+}
+
+void EFileLabel::updateCommitStatus(bool status)
+{
+    changeUnCommit=status;
+    updateLabelName();
 }
 
 EFileLabel::setupLayout()
@@ -19,28 +32,43 @@ EFileLabel::setupLayout()
     layout->addWidget(exitFile);
     layout->setSpacing(0);
     layout->setMargin(0);
-    this->setMaximumWidth(100);
+    this->setMaximumWidth(250);
     this->setLayout(layout);
     exitFile->setText("X");
     exitFile->setMaximumWidth(20);
-    openFile->setText(QFileInfo(filePath).fileName());
-    openFile->setMaximumWidth(80);
+    updateLabelName();
+    //openFile->setMaximumWidth(80);
+}
+
+void EFileLabel::setIsChosen(bool value)
+{
+    isChosen = value;
+    if(isChosen)this->setStyleSheet("background-color:gray");
+    else this->setStyleSheet("background-color:white");
+}
+
+bool EFileLabel::getIsChosen() const
+{
+    return isChosen;
+}
+
+bool EFileLabel::getChangeUnCommit() const
+{
+    return changeUnCommit;
+}
+
+void EFileLabel::handleUncommitChange()
+{
+    updateCommitStatus(true);
 }
 
 void EFileLabel::on_open_file_click()
 {
-    QFile file{filePath};
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-            return;
-    QTextStream in(&file);
-    QString context{""};
-    while(!in.atEnd()){
-        context.append(in.readLine());
-    }
-    edit->setText(context);
+    isChosen=true;
+    emit openClicked(filePath);
 }
 
 void EFileLabel::on_close_file_click()
 {
-
+    emit closeClicked(filePath);
 }

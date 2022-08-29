@@ -1,7 +1,7 @@
 #include "emenu.h"
+#include <QInputDialog>
 
-
-EMenu::EMenu(QWidget *parent) : QMenuBar(parent),is_open(false),is_new_file(false)
+EMenu::EMenu(QWidget *parent) : QMenuBar(parent)
 {
 
     fileMenu=new QMenu("File");
@@ -57,13 +57,17 @@ EMenu::EMenu(QWidget *parent) : QMenuBar(parent),is_open(false),is_new_file(fals
     redoAct->setShortcut(tr("Ctrl+Y"));
     editMenu->addAction(redoAct);
 
-    beautifyAct=new QAction("Beautify");
-    beautifyAct->setShortcut(tr("Ctrl+Alt+L"));
-    editMenu->addAction(beautifyAct);
-
     findAct=new QAction("Find");
     findAct->setShortcut(tr("Ctrl+F"));
     editMenu->addAction(findAct);
+
+    replaceAct=new QAction("Replace");
+    replaceAct->setShortcut(tr("Ctrl+H"));
+    editMenu->addAction(replaceAct);
+
+    beautifyAct=new QAction("Beautify");
+    beautifyAct->setShortcut(tr("Ctrl+Alt+L"));
+    editMenu->addAction(beautifyAct);
 
     connect(openAct,SIGNAL(triggered()),this,SLOT(on_open_click()));
     connect(openFolderAct,SIGNAL(triggered()),this,SLOT(on_open_folder_click()));
@@ -75,21 +79,29 @@ EMenu::EMenu(QWidget *parent) : QMenuBar(parent),is_open(false),is_new_file(fals
     connect(pasteAct,SIGNAL(triggered()),this,SLOT(on_paste_click()));
     connect(undoAct,SIGNAL(triggered()),this,SLOT(on_undo_click()));
     connect(redoAct,SIGNAL(triggered()),this,SLOT(on_redo_click()));
-    this->runAct = new QAction("Run");
-    this->compileAct = new QAction("Compile");
-    this->runAct->setShortcut(tr("Ctrl+R"));
-    this->compileAct->setShortcut(tr("Ctrl+F5"));
-    this->runMenu->addAction(this->compileAct);
-    this->runMenu->addAction(this->runAct);
+    connect(findAct,SIGNAL(triggered()),this,SLOT(on_find_click()));
+    connect(replaceAct,SIGNAL(triggered()),this,SLOT(on_replace_click()));
+    connect(beautifyAct,SIGNAL(triggered()),this,SLOT(on_beautify_click()));
+    runAct = new QAction("Run");
+    compileAct = new QAction("Compile");
+    runAct->setShortcut(tr("Ctrl+R"));
+    compileAct->setShortcut(tr("Ctrl+F5"));
+    runMenu->addAction(compileAct);
+    runMenu->addAction(runAct);
     connect(this->runAct,SIGNAL(triggered()),this,SLOT(on_run_click()));
     connect(this->compileAct,SIGNAL(triggered()),this,SLOT(on_compile_click()));
+}
+
+bool EMenu::isQualified()
+{
+    return editor->edit!=editor->OriginalEdit;
 }
 
 
 
 void EMenu::on_open_click()
 {
-    QString file_path=QFileDialog::getOpenFileName(this, tr("Open File"),"C://",tr("C Files(*.c *.h)"));
+    QString file_path=QFileDialog::getOpenFileName(this, tr("Open File"),"C://",tr("C Files(*.c *.h *.txt)"));
     if(file_path.isEmpty())return;
     QFileInfo info=QFileInfo(file_path);
     explorer->addRootDir(info.dir());
@@ -123,85 +135,53 @@ void EMenu::on_open_folder_click()
 
 void EMenu::on_save_click()
 {
-    if(this->is_new_file)
-    {
-        if(this->editor->edit->toPlainText()=="")
-        {
-            QMessageBox::warning(this,"error","content can not be none!",QMessageBox::Ok);
-        }
-        else
-        {
-            QFileDialog fileDialog;
-            QString str = fileDialog.getSaveFileName(this,"Open File","","Text File(*.txt)");
-            if(str == "")
-            {
-                return;
-            }
-            QFile filename(str);
-            if(!filename.open(QIODevice::WriteOnly | QIODevice::Text))
-            {
-                QMessageBox::warning(this,"error","Open File Error!");
-                return;
-            }
-            else
-            {
-                QTextStream textStream(&filename);
-                QString str = this->editor->edit->toPlainText();
-                textStream << str;
-                this->file_string_current =str;
-            }
-            QMessageBox::information(this,"Save File","Save File Success",QMessageBox::Ok);
-            filename.close();
-            this->is_new_file = false;
-            this->file_name_current = str;
-        }
-    }
-    else
-    {
-        if(this->is_open)
-        {
-            QFile file(file_name_current);
-            if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
-            {
-                QMessageBox::warning(this,"error","Open File Faile");
-                return;
-            }
-            else
-            {
-                QTextStream textString(&file);
-                QString str = this->editor->edit->toPlainText();
-                textString << str;
-                this->file_string_current = str;
-                file.close();
-            }
-        }
-        else
-        {
-            QMessageBox::warning(this,"Warning","Please new or open a file");
-            return;
-        }
-
+    if(isQualified()){
+        QString curEditing=editor->efilebar->curEditing;
+        editor->edit->saveToFile(curEditing);
+        editor->efilebar->openedFiles.value(curEditing).label->updateCommitStatus(false);
     }
 }
 
 void EMenu::on_new_file_click()
 {
-    this->editor->edit->clear();
-    this->editor->edit->setHidden(false);
-    this->is_new_file = true;
-    this->is_open = true;
+    QTreeWidgetItem* ans=explorer->findSelectedDir();
+    if(!ans){
+        QMessageBox::information(parentWidget(),tr("info"),tr("Please open and select a folder to create a new file"));
+        return;
+    }
+    bool ok;
+    QString text = QInputDialog::getText(parentWidget(),"filename","filename", QLineEdit::Normal,"", &ok);
+    if(ok){
+        QString npath=ans->data(0,Qt::UserRole).toString()+"/"+text;
+        QFile nfile{npath};
+        if(nfile.exists()){
+            QMessageBox::information(parentWidget(),tr("info"),tr("The file name exists in the current directory"));
+            return;
+        }
+        nfile.open(QIODevice::WriteOnly);
+        nfile.close();
+        QTreeWidgetItem* nitem=new QTreeWidgetItem;
+        nitem->setText(0,text);
+        nitem->setData(0,Qt::UserRole,npath);
+        ans->insertChild(0,nitem);
+        ans->setSelected(false);
+        nitem->setSelected(true);
+        emit explorer->fileTree->itemDoubleClicked(nitem,0);
+    }
 }
+
+
 void EMenu::on_save_as_click()
 {
-    QString curPath=QDir::currentPath();
-    QString dlgTitle="Save as...";
-    QString filter="h文件(*.h);;c文件(*.c);;文本文件(*.txt)";
-    QString aFileName=QFileDialog::getSaveFileName(this,dlgTitle,curPath,filter);
-    if (aFileName.isEmpty())
-        return;
-    saveTextByStream(aFileName);
-    this->file_name_current = aFileName;
-    this->is_new_file=false;
+    if(isQualified()){
+        QString curPath=QDir::currentPath();
+        QString dlgTitle="Save as...";
+        QString filter="*.c;;*.h;;*.txt";
+        QString aFileName=QFileDialog::getSaveFileName(this,dlgTitle,curPath,filter);
+        if (aFileName.isEmpty())
+            return;
+        editor->edit->saveToFile(aFileName);
+    }
 }
 
 void EMenu::on_copy_click()
@@ -230,18 +210,32 @@ void EMenu::on_cut_click()
     else
         clipboard->setText(txt);
     editor->edit->textCursor().removeSelectedText();
-
 }
 
 void EMenu::on_undo_click()
 {
-    clipboard = QApplication::clipboard();
     editor->edit->undo();
 }
 void EMenu::on_redo_click()
 {
-    clipboard = QApplication::clipboard();
     editor->edit->redo();
+}
+
+void EMenu::on_find_click()
+{
+   finddialog = new FindDialog(this,editor->edit);
+   finddialog->show();
+}
+
+void EMenu::on_replace_click()
+{
+    replacedialog = new ReplaceDialog(this,editor->edit);
+    replacedialog->show();
+}
+
+void EMenu::on_beautify_click()
+{
+
 }
 
 void EMenu::on_compile_click()
@@ -254,33 +248,4 @@ void EMenu::on_run_click()
 {
     emit run_signal();
     //by zlq 8.27 10:04 解耦，具体实现放在build.cpp
-}
-
-bool EMenu::openTextByStream(const QString &aFileName)
-{
-    QFile aFile(aFileName);
-    if (!aFile.exists())
-        return false;
-    if (!aFile.open(QIODevice::ReadOnly | QIODevice::Text))
-        return false;
-    QTextStream aStream(&aFile);
-    aStream.setAutoDetectUnicode(true);
-    this->file_string_current = aStream.readAll();
-    this->editor->edit->setText(file_string_current);
-    aFile.close();
-    return  true;
-}
-
-bool EMenu::saveTextByStream(const QString &aFileName)
-{
-    QFile   aFile(aFileName);
-    if (!aFile.open(QIODevice::WriteOnly | QIODevice::Text))
-        return false;
-
-    QTextStream aStream(&aFile);
-    QString str=editor->edit->toPlainText();
-    aStream<<str;
-    aFile.close();
-    return  true;
-
 }
