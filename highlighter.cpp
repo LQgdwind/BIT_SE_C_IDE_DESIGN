@@ -4,9 +4,9 @@ Highlighter::Highlighter(QTextDocument *parent)
     : QSyntaxHighlighter(parent)
 {
     HighlightingRule rule;
+    keywordFormat.setForeground(QColor(128,128,0));//关键字
+    //keywordFormat.setFontWeight(QFont::Bold);
 
-    keywordFormat.setForeground(QColor(0,57,193));
-//    keywordFormat.setFontWeight(QFont::Bold);
     QStringList keywordPatterns;
     keywordPatterns << "\\bchar\\b" << "\\bclass\\b" << "\\bconst\\b"
                     << "\\bdouble\\b" << "\\benum\\b" << "\\bexplicit\\b"
@@ -29,8 +29,9 @@ Highlighter::Highlighter(QTextDocument *parent)
     }
 
     //类 规则
-    classFormat.setFontWeight(QFont::Bold);
-    classFormat.setForeground(Qt::darkMagenta);
+    //classFormat.setFontWeight(QFont::Bold);
+    classFormat.setForeground(QColor(131,4,128));
+
     rule.pattern = QRegularExpression("(?<=class\\s)\\w*");
     rule.format = classFormat;
     highlightingRules.append(rule); //
@@ -50,8 +51,10 @@ Highlighter::Highlighter(QTextDocument *parent)
     highlightingRules.append(rule);
 
     //函数 规则
-//    functionFormat.setFontItalic(true);
-    functionFormat.setForeground(QColor(143,57,128));
+
+    functionFormat.setFontItalic(true);
+    functionFormat.setForeground(QColor(255,0,0));
+
     rule.pattern = QRegularExpression("\\b[A-Za-z0-9_]+(?=\\()");
     rule.format = functionFormat;
     highlightingRules.append(rule);

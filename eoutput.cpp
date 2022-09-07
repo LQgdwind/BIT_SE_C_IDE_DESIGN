@@ -19,8 +19,6 @@ void EOutPut::printForUiDesign()
 
 void EOutPut::initialEoutput()
 {
-
-    this->setStyleSheet("background-color: rgb(70,70,70);color:white;");
     QFont textFont;
     textFont.setFamily("Consolas");
     textFont.setPointSize(15);

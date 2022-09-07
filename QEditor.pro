@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -39,7 +39,11 @@ SOURCES += \
     completelistwidget.cpp \
     highlighter.cpp \
     finddialog.cpp \
-    replacedialog.cpp
+    replacedialog.cpp \
+    etheme.cpp \
+    debugger.cpp \
+    debuggerpage.cpp \
+    gdbresultparser.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -57,11 +61,17 @@ HEADERS += \
     completelistwidget.h \
     highlighter.h \
     finddialog.h \
-    replacedialog.h
+    replacedialog.h \
+    etheme.h \
+    debugger.h \
+    debuggerpage.h \
+    gdbresultparser.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    debuggerpage.ui
 
 RESOURCES += \
     res.qrc \
     res.qrc
+RC_ICONS = logo.ico

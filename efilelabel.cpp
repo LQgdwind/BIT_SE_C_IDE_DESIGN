@@ -36,15 +36,29 @@ EFileLabel::setupLayout()
     this->setLayout(layout);
     exitFile->setText("X");
     exitFile->setMaximumWidth(20);
+    //openFile->setStyleSheet("background-color: rgb(30,30,30);color: rgb(200,200,200)");//文件名
+    //exitFile->setStyleSheet("background-color: rgb(30,30,30);color: rgb(200,200,200)");//退出文件
     updateLabelName();
     //openFile->setMaximumWidth(80);
+}
+
+QString EFileLabel::getFilePath() const
+{
+    return filePath;
+}
+
+void EFileLabel::setFilePath(const QString &value)
+{
+    filePath = value;
+    fileName=QFileInfo(filePath).fileName();
+    updateLabelName();
 }
 
 void EFileLabel::setIsChosen(bool value)
 {
     isChosen = value;
-    if(isChosen)this->setStyleSheet("background-color:gray");
-    else this->setStyleSheet("background-color:white");
+//    if(isChosen)this->setStyleSheet("background-color: rgb(30,30,30);color: rgb(200,200,200)");//选择
+//    else this->setStyleSheet("background-color: rgb(45,45,45);color: rgb(160,160,160)");//未选择
 }
 
 bool EFileLabel::getIsChosen() const

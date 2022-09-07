@@ -22,7 +22,6 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     void setupLayout();
     ~MainWindow();
-private:
     Ui::MainWindow *ui;
     EMenu *menubar;
     QGridLayout *layout;

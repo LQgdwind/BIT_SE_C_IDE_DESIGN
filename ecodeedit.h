@@ -30,6 +30,12 @@ public:
     int lineNumberAreaWidth();
     void setUpCompleteList();
     bool saveToFile(const QString &name);
+    QColor lineColor;
+    QColor currentLineColor;
+    void allhideline(bool foldorunfold);
+    void allhidenoteline(bool foldorunfold);
+//    void hideline();
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
@@ -39,21 +45,24 @@ private slots:
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &, int);
     void showCompleteWidget();
+    void hideline();
+    void hidenoteline();
     //void completeWidgetKeyDown();
 
 private:
     QWidget *lineNumberArea;
-    QColor lineColor;
     QColor editorColor;
-    QColor currentLineColor;
     QStringList completeList;//储存自动填充的关键字
-//    QListWidget *completeWidget;
     CompleteListWidget *completeWidget;
     QString getWordOfCursor();
     int completeState;
     int getCompleteWidgetX();
     Highlighter *highlighter;
     void setUpHighlighter();
+
+//    int linenum;
+//    void hideline();
+
 };
 
 class LineNumberArea : public QWidget

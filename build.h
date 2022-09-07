@@ -7,12 +7,13 @@
 #include <QProcess>
 #include <windows.h>
 
+#define DEFAULT_BUILD_PATH "C:/Users/Administrator/Desktop/testc"//默认位置指定
+
 class Build : public QWidget
 {
     Q_OBJECT
 public:
     explicit Build(EMenu*,QWidget *parent = nullptr);
-    void setBuildDir(QDir buildDir);
     EMenu* emenu;
 signals:
 private:
@@ -20,7 +21,8 @@ private:
 public slots:
     void eRun();
     void eCompile();
+    void eMultiCompile();
+    void setBuildDir(QDir buildDir);
 };
 
 #endif // BUILD_H
-

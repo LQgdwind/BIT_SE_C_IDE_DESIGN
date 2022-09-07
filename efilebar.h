@@ -19,9 +19,12 @@ public:
     void open_file(QString file);
 signals:
     void updateEdit(EcodeEditor *curEdit);
+    void shouldUpdateRef();
 public slots:
     void showLabel(QString name);
     void deleteLabel(QString name);
+    void handleFileRenamed(QString oldName,QString newName);
+    void handleFileDeleted(QString name);
 };
 
 #endif // EFILEBAR_H

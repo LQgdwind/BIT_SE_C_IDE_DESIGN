@@ -36,4 +36,8 @@
 #include <QClipboard>
 #include <QApplication>
 #include <QTextCursor>
+
+#include <QListWidget>
+#include <QListWidgetItem>
+#include <QTextDocument>
 #endif // HELPER_H

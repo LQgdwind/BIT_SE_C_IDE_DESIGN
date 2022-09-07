@@ -14,18 +14,20 @@ public:
     explicit EFileLabel(QString filePath,QWidget *parent = nullptr);
     QHBoxLayout *layout;
     QPushButton *openFile,*exitFile;
-    QString filePath;
-    QString fileName;
     void updateLabelName();
     void updateCommitStatus(bool status);
     bool getChangeUnCommit() const;
     bool getIsChosen() const;
     void setIsChosen(bool value);
+    QString getFilePath() const;
+    void setFilePath(const QString &value);
 signals:
     void openClicked(QString s);
     void closeClicked(QString s);
 private:
     setupLayout();
+    QString filePath;
+    QString fileName;
     bool isChosen{true};
     bool changeUnCommit{false};
 public slots:

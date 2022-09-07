@@ -2,39 +2,45 @@
 #include <QDebug>
 #include "ecodeedit.h"
 
+int linenum;
+int isornot[2000] = {0};
+
 EcodeEditor::EcodeEditor(QWidget *parent) : QPlainTextEdit(parent)
 {
 
-        lineNumberArea = new LineNumberArea(this);
-        updateLineNumberAreaWidth(0);
-        currentLineColor = QColor(Qt::white);
-//        highlightCurrentLine();
+    lineNumberArea = new LineNumberArea(this);
+    updateLineNumberAreaWidth(0);
+    currentLineColor = QColor(30,30,30);//只读时高亮条颜色
+//  highlightCurrentLine();
 
-        connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
-        connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateLineNumberArea(QRect,int)));
-        connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));
-        connect(this, SIGNAL(cursorPositionChanged()),this,SLOT(showCompleteWidget()));
+    connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
+    connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateLineNumberArea(QRect,int)));
+    connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));
+    connect(this, SIGNAL(cursorPositionChanged()),this,SLOT(showCompleteWidget()));
+    connect(this, SIGNAL(selectionChanged()),this,SLOT(hideline()));
+    connect(this, SIGNAL(selectionChanged()),this,SLOT(hidenoteline()));
 
-        //set color value
-        lineColor.setRgb(240,240,240); //数字条背景色
-        editorColor.setRgb(255,255,255); //codeEdit背景色
 
-        //set background color
-        QPalette p = this->palette();
-        p.setColor(QPalette::Active, QPalette::Base, editorColor);
-        p.setColor(QPalette::Inactive, QPalette::Base, editorColor);
-        p.setColor(QPalette::Text,Qt::black);
-        this->setPalette(p);
-        //初始化补全列表
-        setUpCompleteList();
-        completeWidget= new CompleteListWidget(this);
-        completeWidget->hide();
-        completeWidget->setMaximumHeight(fontMetrics().height()*5);
-        completeState=CompleteState::Hide;
+    //set color value
+    lineColor.setRgb(30,30,30); //数字条背景色
+//    //editorColor.setRgb(255,255,255); //codeEdit背景色
 
-        //高亮
-        setUpHighlighter();
+//    //set background color
+//    QPalette p = this->palette();
+//    p.setColor(QPalette::Active, QPalette::Base, editorColor);
+//    p.setColor(QPalette::Inactive, QPalette::Base, editorColor);
+//    p.setColor(QPalette::Text,Qt::black);
+//    this->setPalette(p);
 
+    //初始化补全列表
+    setUpCompleteList();
+    completeWidget= new CompleteListWidget(this);
+    completeWidget->hide();
+    completeWidget->setMaximumHeight(fontMetrics().height()*5);
+    completeState=CompleteState::Hide;
+
+    //高亮
+    setUpHighlighter();
 }
 
 int EcodeEditor::lineNumberAreaWidth() //行号区域宽度
@@ -52,19 +58,12 @@ int EcodeEditor::lineNumberAreaWidth() //行号区域宽度
     return space;
 }
 
-//![extraAreaWidth]
-
-//![slotUpdateExtraAreaWidth]
-
 //设定左边留白的宽度，参数无效，没有用到
 void EcodeEditor::updateLineNumberAreaWidth(int /* newBlockCount */)
 {
     setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
 }
 
-//![slotUpdateExtraAreaWidth]
-
-//![slotUpdateRequest]
 //文本框滚动时同时滚动行数
 void EcodeEditor::updateLineNumberArea(const QRect &rect, int dy)
 {
@@ -78,9 +77,6 @@ void EcodeEditor::updateLineNumberArea(const QRect &rect, int dy)
 
 }
 
-//![slotUpdateRequest]
-
-//![resizeEvent]
 //尺寸调整函数
 void EcodeEditor::resizeEvent(QResizeEvent *e)
 {
@@ -90,9 +86,6 @@ void EcodeEditor::resizeEvent(QResizeEvent *e)
     lineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
 }
 
-//![resizeEvent]
-
-//![cursorPositionChanged]
 
 void EcodeEditor::highlightCurrentLine()
 {
@@ -100,7 +93,6 @@ void EcodeEditor::highlightCurrentLine()
     if (!this->isReadOnly()) {
         QTextEdit::ExtraSelection selection;
 
-//        currentLineColor = QColor(Qt::red).lighter(160); //高亮条颜色
         selection.format.setBackground(currentLineColor);
         selection.format.setProperty(QTextFormat::FullWidthSelection, true);
         selection.cursor = textCursor();
@@ -110,43 +102,409 @@ void EcodeEditor::highlightCurrentLine()
     setExtraSelections(extraSelections);
 }
 
-//![cursorPositionChanged]
-
-//![extraAreaPaintEvent_0]
 //打印行号，此函数被paintEvent 调用，paintEvent在头文件里被重写
 void EcodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 {
-    if (!isReadOnly()){
-        currentLineColor = QColor(Qt::red).lighter(160);
+    if (!isReadOnly())
+    {
+        currentLineColor = QColor(100,100,100).lighter(160);//编辑时高亮条颜色
         QPainter painter(lineNumberArea);
         painter.fillRect(event->rect(), lineColor);
-//![extraAreaPaintEvent_0]
 
-//![extraAreaPaintEvent_1]
-    QTextBlock block = firstVisibleBlock();
-    int blockNumber = block.blockNumber();
-    int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
-    int bottom = top + (int) blockBoundingRect(block).height();
-//![extraAreaPaintEvent_1]
+        QTextBlock block = firstVisibleBlock();
+        int blockNumber = block.blockNumber();
+        int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
+        int bottom = top + (int) blockBoundingRect(block).height();
 
-//![extraAreaPaintEvent_2]
-    while (block.isValid() && top <= event->rect().bottom()) {
-        if (block.isVisible() && bottom >= event->rect().top()) {
-            QString number = QString::number(blockNumber + 1);
-            painter.setPen(Qt::lightGray);
-            painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(),
-                             Qt::AlignCenter, number);
+        while (block.isValid() && top <= event->rect().bottom())
+        {
+            if (block.isVisible() && bottom >= event->rect().top())
+            {
+                QString number = QString::number(blockNumber + 1);
+                painter.setPen(Qt::lightGray);
+                painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(),
+                                 Qt::AlignCenter, number);
+
+            }
+            block = block.next();
+            top = bottom;
+            bottom = top + (int) blockBoundingRect(block).height();
+            ++blockNumber;
+            if(linenum < blockNumber) linenum = blockNumber;
         }
-
-        block = block.next();
-        top = bottom;
-        bottom = top + (int) blockBoundingRect(block).height();
-        ++blockNumber;
-    }
 
     }
 }
-//![extraAreaPaintEvent_2]
+
+void EcodeEditor::hideline()
+{
+    int linenumber[linenum];
+    int hide = 0;
+    int hidelinenumber[linenum];
+    int hide1 = 0;
+    int hidelinenumber1[linenum];
+    int hide2 = 0;
+    int hidelinenumber2[linenum];
+
+    for(int i = 0; i < linenum;i++)
+    {
+        linenumber[i] = i + 1;
+        QTextBlock blocktemp = this->document()->findBlockByNumber(i);
+        if(blocktemp.text().contains("{")) linenumber[i]++;
+        if(blocktemp.text().contains("}")) linenumber[i]--;
+    }
+    for(int i = 0; i < linenum;i++)
+    {
+
+        if(linenumber[i] == i+2)
+        {
+            hidelinenumber1[hide1]=linenumber[i] - 1;
+            hide1++;
+        }
+        if(linenumber[i] == i)
+        {
+            hidelinenumber2[hide2]=linenumber[i] + 1;
+            hide2++;
+            if(hide1 == hide2)
+            {
+                hidelinenumber[hide] = hide2-1;
+                hide++;
+            }
+        }
+    }
+
+    int row = this->textCursor().blockNumber();
+    qDebug()<<this->document()->findBlockByLineNumber(row+1).text();
+    if(this->document()->findBlockByLineNumber(row+1).text().contains("{"))
+    {
+        int hidetemp=0,hidetemp1=0,hidetemp2=0;
+        int left = 1;
+        for(int i = 0; i < hide1;i++)
+        {
+            if(hidelinenumber1[i] == row+2) hidetemp1 = i;
+        }
+        for(int i = 0; i < hide1;i++)
+        {
+            if(hidelinenumber1[hidelinenumber[i]] >= row+2)
+            {
+                hidetemp = hidelinenumber[i];
+                break;
+            }
+
+        }
+        for(int i = row+3;i <= hidelinenumber2[hidetemp];i++)
+        {
+            if(this->document()->findBlockByLineNumber(i-1).text().contains("{")) left++;
+            if(this->document()->findBlockByLineNumber(i-1).text().contains("}")) left--;
+            if((this->document()->findBlockByLineNumber(i-1).text().contains("}")) && (left==0))
+            {
+                hidetemp2=i;
+                break;
+            }
+
+        }
+        if(isornot[hidelinenumber1[hidetemp1]-1] == 0)
+        {
+            for(int i = row+2;i <= hidetemp2;i++)
+            {
+                QTextBlock myTextBlock = this->document()->findBlockByNumber(i-1);
+
+                myTextBlock.setVisible(false);
+            }
+            this->repaint();
+            isornot[hidelinenumber1[hidetemp1]-1] = 1;
+        }
+        else
+        {
+            for(int i = row+2;i <= hidetemp2;i++)
+            {
+                QTextBlock myTextBlock = this->document()->findBlockByNumber(i-1);
+
+                myTextBlock.setVisible(true);
+            }
+            this->repaint();
+            isornot[hidelinenumber1[hidetemp1]-1] = 0;
+        }
+    }
+}
+
+void EcodeEditor::hidenoteline()
+{
+    int linenumber[linenum];
+    int hide = 0;
+    int hidelinenumber[linenum];
+    int hide1 = 0;
+    int hidelinenumber1[linenum];
+    int hide2 = 0;
+    int hidelinenumber2[linenum];
+
+    for(int i = 0; i < linenum;i++)
+    {
+        linenumber[i] = i + 1;
+        QTextBlock blocktemp = this->document()->findBlockByNumber(i);
+        if(blocktemp.text().contains("/*")) linenumber[i]++;
+        if(blocktemp.text().contains("*/")) linenumber[i]--;
+    }
+    for(int i = 0; i < linenum;i++)
+    {
+
+        if(linenumber[i] == i+2)
+        {
+            hidelinenumber1[hide1]=linenumber[i] - 1;
+            hide1++;
+        }
+        if(linenumber[i] == i)
+        {
+            hidelinenumber2[hide2]=linenumber[i] + 1;
+            hide2++;
+            if(hide1 == hide2)
+            {
+                hidelinenumber[hide] = hide2-1;
+                hide++;
+            }
+        }
+    }
+
+    int row = this->textCursor().blockNumber();
+    if(this->document()->findBlockByLineNumber(row).text().contains("/*"))
+    {
+        int hidetemp=0,hidetemp1=0,hidetemp2=0;
+        int left = 1;
+        for(int i = 0; i < hide1;i++)
+        {
+            if(hidelinenumber1[i] == row+1) hidetemp1 = i;
+        }
+        for(int i = 0; i < hide1;i++)
+        {
+            if(hidelinenumber1[hidelinenumber[i]] >= row+1)
+            {
+                hidetemp = hidelinenumber[i];
+                break;
+            }
+
+        }
+        for(int i = row+2;i <= hidelinenumber2[hidetemp];i++)
+        {
+            if(this->document()->findBlockByLineNumber(i-1).text().contains("/*")) left++;
+            if(this->document()->findBlockByLineNumber(i-1).text().contains("*/")) left--;
+            if((this->document()->findBlockByLineNumber(i-1).text().contains("*/")) && (left==0))
+            {
+                hidetemp2=i;
+                break;
+            }
+
+        }
+        if(isornot[hidelinenumber1[hidetemp1]-1] == 0)
+        {
+            for(int i = row+2;i <= hidetemp2;i++)
+            {
+                QTextBlock myTextBlock = this->document()->findBlockByNumber(i-1);
+
+                myTextBlock.setVisible(false);
+            }
+            this->repaint();
+            isornot[hidelinenumber1[hidetemp1]-1] = 1;
+        }
+        else
+        {
+            for(int i = row+2;i <= hidetemp2;i++)
+            {
+                QTextBlock myTextBlock = this->document()->findBlockByNumber(i-1);
+
+                myTextBlock.setVisible(true);
+            }
+            this->repaint();
+            isornot[hidelinenumber1[hidetemp1]-1] = 0;
+        }
+    }
+}
+
+void EcodeEditor::allhideline(bool foldorunfold)
+{
+    int linenumber[linenum];
+    int hide = 0;
+    int hidelinenumber[linenum];
+    int hide1 = 0;
+    int hidelinenumber1[linenum];
+    int hide2 = 0;
+    int hidelinenumber2[linenum];
+
+    for(int i = 0; i < linenum;i++)
+    {
+        linenumber[i] = i + 1;
+        QTextBlock blocktemp = this->document()->findBlockByNumber(i);
+        if(blocktemp.text().contains("{")) linenumber[i]++;
+        if(blocktemp.text().contains("}")) linenumber[i]--;
+    }
+    for(int i = 0; i < linenum;i++)
+    {
+
+        if(linenumber[i] == i+2)
+        {
+            hidelinenumber1[hide1]=linenumber[i] - 1;
+            hide1++;
+        }
+        if(linenumber[i] == i)
+        {
+            hidelinenumber2[hide2]=linenumber[i] + 1;
+            hide2++;
+            if(hide1 == hide2)
+            {
+                hidelinenumber[hide] = hide2-1;
+                hide++;
+            }
+        }
+    }
+
+    for(int row = 0;row <= linenum;row++)
+    {
+        if(this->document()->findBlockByLineNumber(row+1).text().contains("{"))
+        {
+            int hidetemp=0,hidetemp1=0,hidetemp2=0;
+            int left = 1;
+            for(int i = 0; i < hide1;i++)
+            {
+                if(hidelinenumber1[i] == row+2) hidetemp1 = i;
+            }
+            for(int i = 0; i < hide1;i++)
+            {
+                if(hidelinenumber1[hidelinenumber[i]] >= row+2)
+                {
+                    hidetemp = hidelinenumber[i];
+                    break;
+                }
+
+            }
+            for(int i = row+3;i <= hidelinenumber2[hidetemp];i++)
+            {
+                if(this->document()->findBlockByLineNumber(i-1).text().contains("{")) left++;
+                if(this->document()->findBlockByLineNumber(i-1).text().contains("}")) left--;
+                if((this->document()->findBlockByLineNumber(i-1).text().contains("}")) && (left==0))
+                {
+                    hidetemp2=i;
+                    break;
+                }
+
+            }
+            if(foldorunfold)
+            {
+                for(int i = row+2;i <= hidetemp2;i++)
+                {
+                    QTextBlock myTextBlock = this->document()->findBlockByNumber(i-1);
+
+                    myTextBlock.setVisible(false);
+                }
+                this->repaint();
+                isornot[2000] = {1};
+            }
+            else
+            {
+                for(int i = row+2;i <= hidetemp2;i++)
+                {
+                    QTextBlock myTextBlock = this->document()->findBlockByNumber(i-1);
+
+                    myTextBlock.setVisible(true);
+                }
+                this->repaint();
+                isornot[2000] = {0};
+            }
+        }
+    }
+}
+
+void EcodeEditor::allhidenoteline(bool foldorunfold)
+{
+    int linenumber[linenum];
+    int hide = 0;
+    int hidelinenumber[linenum];
+    int hide1 = 0;
+    int hidelinenumber1[linenum];
+    int hide2 = 0;
+    int hidelinenumber2[linenum];
+
+    for(int i = 0; i < linenum;i++)
+    {
+        linenumber[i] = i + 1;
+        QTextBlock blocktemp = this->document()->findBlockByNumber(i);
+        if(blocktemp.text().contains("/*")) linenumber[i]++;
+        if(blocktemp.text().contains("*/")) linenumber[i]--;
+    }
+    for(int i = 0; i < linenum;i++)
+    {
+
+        if(linenumber[i] == i+2)
+        {
+            hidelinenumber1[hide1]=linenumber[i] - 1;
+            hide1++;
+        }
+        if(linenumber[i] == i)
+        {
+            hidelinenumber2[hide2]=linenumber[i] + 1;
+            hide2++;
+            if(hide1 == hide2)
+            {
+                hidelinenumber[hide] = hide2-1;
+                hide++;
+            }
+        }
+    }
+
+    for(int row = 0;row <= linenum;row++)
+    {
+        if(this->document()->findBlockByLineNumber(row).text().contains("/*"))
+        {
+            int hidetemp=0,hidetemp1=0,hidetemp2=0;
+            int left = 1;
+            for(int i = 0; i < hide1;i++)
+            {
+                if(hidelinenumber1[i] == row+1) hidetemp1 = i;
+            }
+            for(int i = 0; i < hide1;i++)
+            {
+                if(hidelinenumber1[hidelinenumber[i]] >= row+1)
+                {
+                    hidetemp = hidelinenumber[i];
+                    break;
+                }
+
+            }
+            for(int i = row+2;i <= hidelinenumber2[hidetemp];i++)
+            {
+                if(this->document()->findBlockByLineNumber(i-1).text().contains("/*")) left++;
+                if(this->document()->findBlockByLineNumber(i-1).text().contains("*/")) left--;
+                if((this->document()->findBlockByLineNumber(i-1).text().contains("*/")) && (left==0))
+                {
+                    hidetemp2=i;
+                    break;
+                }
+
+            }
+            if(foldorunfold)
+            {
+                for(int i = row+2;i <= hidetemp2;i++)
+                {
+                    QTextBlock myTextBlock = this->document()->findBlockByNumber(i-1);
+
+                    myTextBlock.setVisible(false);
+                }
+                this->repaint();
+                isornot[2000] = 1;
+            }
+            else
+            {
+                for(int i = row+2;i <= hidetemp2;i++)
+                {
+                    QTextBlock myTextBlock = this->document()->findBlockByNumber(i-1);
+
+                    myTextBlock.setVisible(true);
+                }
+                this->repaint();
+                isornot[2000] = 0;
+            }
+        }
+    }
+
+}
 
 //自动补全
 void EcodeEditor::keyPressEvent(QKeyEvent *event){
@@ -235,22 +593,6 @@ void EcodeEditor::keyPressEvent(QKeyEvent *event){
         //qDebug()<<event->key();
     }
 }
-//void EcodeEditor::setUpCompleteList(){
-//  completeList<< "char" << "class" << "const"
-//              << "double" << "enum" << "explicit"
-//              << "friend" << "inline" << "int"
-//              << "long" << "namespace" << "operator"
-//              << "private" << "protected" << "public"
-//              << "short" << "signals" << "signed"
-//              << "slots" << "static" << "struct"
-//              << "template" << "typedef" << "typename"
-//              << "union" << "unsigned" << "virtual"
-//              << "void" << "volatile" << "bool"<<"using"<<"constexpr"
-//              <<"sizeof"<<"if"<<"for"<<"foreach"<<"while"<<"do"<<"case"
-//              <<"break"<<"continue"<<"template"<<"delete"<<"new"
-//              <<"default"<<"try"<<"return"<<"throw"<<"catch"<<"goto"<<"else"
-//              <<"extren"<<"this"<<"switch"<<"#include <>"<<"#include \"\""<<"#define"<<"iostream";
-//}
 
 void EcodeEditor::setUpCompleteList(){
   completeList<< "char" << "class" << "const"
@@ -279,6 +621,7 @@ bool EcodeEditor::saveToFile(const QString &name)
     aStream<<str;
     aFile.close();
 }
+
 //得到当前光标位置的字符串
 QString EcodeEditor::getWordOfCursor(){
     int pos=this->textCursor().position()-1;

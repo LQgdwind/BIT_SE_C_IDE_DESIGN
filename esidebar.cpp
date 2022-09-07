@@ -3,7 +3,6 @@
 
 ESideBar::ESideBar(QWidget *parent) : QWidget(parent)
 {
-
     //explorer_icon
     this->exploreBtn = new QPushButton(this);
     exploreBtn->setMaximumSize(64,64);
@@ -12,6 +11,7 @@ ESideBar::ESideBar(QWidget *parent) : QWidget(parent)
     exploreBtn->setIcon(con1);
     exploreBtn->setIconSize(QSize(50,50));
     exploreBtn->setAutoFillBackground(true);
+
 
     //search_icon
     this->searchBtn = new QPushButton(this);
@@ -23,6 +23,7 @@ ESideBar::ESideBar(QWidget *parent) : QWidget(parent)
     searchBtn->setAutoFillBackground(true);
     searchBtn->setGeometry(0,64,64,64);
 
+
     //run_icon
     this->runBtn = new QPushButton(this);
     runBtn->setMaximumSize(64,64);
@@ -33,19 +34,39 @@ ESideBar::ESideBar(QWidget *parent) : QWidget(parent)
     runBtn->setAutoFillBackground(true);
     runBtn->setGeometry(0,128,64,64);
 
+    //debug_icon
+    this->debugBtn = new QPushButton(this);
+    debugBtn->setMaximumSize(64,64);
+    debugBtn->setMinimumSize(64,64);
+    QIcon con4(":/images/debug_icon.png");
+    debugBtn->setIcon(con4);
+    debugBtn->setIconSize(QSize(50,50));
+    debugBtn->setAutoFillBackground(true);
+    debugBtn->setGeometry(0,192,64,64);
+
     //compile_icon
     this->compileBtn = new QPushButton(this);
     compileBtn->setMaximumSize(64,64);
     compileBtn->setMinimumSize(64,64);
-    QIcon con4(":/images/compile_icon.png");
-    compileBtn->setIcon(con4);
+    QIcon con5(":/images/compile_icon.png");
+    compileBtn->setIcon(con5);
     compileBtn->setIconSize(QSize(50,50));
     compileBtn->setAutoFillBackground(true);
-    compileBtn->setGeometry(0,192,64,64);
+    compileBtn->setGeometry(0,256,64,64);
+
 
 //    待定的槽
 //    connect(exploreBtn,SIGNAL(clicked(bool)), ,SLOT());
 //    connect(searchBtnBtn,SIGNAL(clicked(bool)), ,SLOT());
 //    connect(runBtn,SIGNAL(clicked(bool)), ,SLOT());
-//    connect(compileBtn,SIGNAL(clicked(bool)), ,SLOT());
+    //    connect(compileBtn,SIGNAL(clicked(bool)), ,SLOT());
+}
+
+void ESideBar::appendActions(EMenu *menu)
+{
+    connect(exploreBtn,&QPushButton::clicked,menu,&EMenu::on_open_folder_click);
+    connect(searchBtn,&QPushButton::clicked,menu,&EMenu::on_find_click);
+    connect(runBtn,&QPushButton::clicked,menu,&EMenu::on_run_click);
+    connect(debugBtn,&QPushButton::clicked,menu,&EMenu::on_debug_click);
+    connect(compileBtn,&QPushButton::clicked,menu,&EMenu::on_compile_click);
 }
