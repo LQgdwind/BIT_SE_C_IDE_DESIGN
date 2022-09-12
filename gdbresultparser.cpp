@@ -28,6 +28,7 @@ void GDBResultParser::parseResult(void){
 
     GDBResults result;
     qDebug()<<buffer;
+    if (buffer.size() == 0)return;
     QStringList bufferCut = buffer
             .replace(",", " ")
             .split(" ");
